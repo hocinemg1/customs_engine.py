@@ -1,16 +1,16 @@
 """
 =============================================================================
- نظام المحاكاة الجمركية الذكي المطور - Business Gate DZ (Customs Web Engine)
- إشراف الخبير: أستاذ حوسين (خبرة 27 سنة في الإطار الجمركي والتشريعات)
+ Business Gate DZ - Customs Web Engine (Interactive Simulation)
+ Expert Supervisor: Professor Hocine (27 years of customs & legal experience)
 =============================================================================
 """
 
 import streamlit as st
 
-# إعداد واجهة الصفحة
+# Page configuration
 st.set_page_config(
     page_title="Business Gate DZ - Customs Engine",
-    page_icon="سوم",
+    page_icon="🏛️",
     layout="centered"
 )
 
@@ -18,14 +18,14 @@ st.title("🏛️ Business Gate DZ - المحاكي الجمركي الذكي")
 st.markdown("### نظام احترافي لتحديد البنود الجمركية (HS Code) وحساب الحقوق والرسوم (مع إعفاءات AAPI)")
 st.markdown("---")
 
-# قاعدة بيانات موسعة للبنود والرسوم الجبائية والجمارك
+# Extended database for customs tariffs and fiscal duties
 TARIFF_DATABASE = {
     "آلات ومعدات الرفع والمناولة (84.22)": {
         "code_sh": "84.22",
         "description": "آلات ومعدات الرفع أو المناولة أو التحميل",
-        "dd": 5.0,  # حقوق الجمارك
-        "tva": 19.0, # الرسم على القيمة المضافة
-        "tic": 0.0,  # رسوم إضافية
+        "dd": 5.0,  # Customs duty %
+        "tva": 19.0, # VAT %
+        "tic": 0.0,  # Internal tax on consumption %
         "aapi_eligible": True
     },
     "أجهزة الاتصالات والترددات (85.17)": {
@@ -54,7 +54,7 @@ TARIFF_DATABASE = {
     }
 }
 
-# تصميم واجهة الإدخال للمستخدم
+# Sidebar inputs
 st.sidebar.header("⚙️ خيارات المحاكاة")
 selected_item_key = st.sidebar.selectbox("اختر السلعة أو القطاع:", list(TARIFF_DATABASE.keys()))
 
@@ -62,26 +62,25 @@ item_data = TARIFF_DATABASE[selected_item_key]
 
 cif_value = st.number_input("أدخل القيمة الجمركية للسلعة (CIF بالدج - DZD):", min_value=0.0, value=10000000.0, step=100000.0)
 
-# حالة الاستثمار وإعفاءات AAPI
+# AAPI investment exemption status
 has_aapi = st.sidebar.checkbox("تطبيق إعفاءات الوكالة الوطنية لترقية الاستثمار (AAPI)", value=True)
 
-# حالة السلعة (القواعد الست RGI)
+# State & composition (RGI rules)
 st.sidebar.markdown("---")
 st.sidebar.markdown("### تطبيق القواعد الست (RGI):")
 state_type = st.sidebar.selectbox("حالة السلعة:", ["تامة الصنع (Finished)", "غير تامة/أجزاء لها خصائص الأساسية (Incomplete - RGI 2)"])
 composition_type = st.sidebar.selectbox("تركيبة السلعة:", ["سلعة بسيطة (Single)", "مخلوط / مواد مركبة (Mixture - RGI 3)"])
 
-# زر التنفيذ
+# Execution button
 if st.button("🚀 تنفيذ المحاكاة وحساب الرسوم بدقة"):
     
-    # محاكاة القواعد
     st.info("📌 جاري تحليل السلعة عبر خوارزمية القواعد الست لتفسير النظام المنسق (RGI 1 إلى 6)...")
     if "Mixture" in composition_type:
         st.warning("⚠️ تم رصد مادة مركبة: يُطبق التسلسل الهرمي (الطابع الغالب / الوصف الأكثر تحديداً - القاعدة 3).")
     if "Incomplete" in state_type:
         st.warning("⚠️ تم رصد سلعة غير تامة الصنع: تُعامل معاملة التامة نظراً لامتلاكها الخصائص الأساسية (القاعدة 2-أ).")
 
-    # الحسابات المالية
+    # Financial calculations
     dd_rate = item_data["dd"]
     tva_rate = item_data["tva"]
     tic_rate = item_data["tic"]
@@ -92,14 +91,13 @@ if st.button("🚀 تنفيذ المحاكاة وحساب الرسوم بدقة"
         tic_rate = 0.0
         exemption_note = "✨ مستفيد من الإعفاء الجمركي الكلي/الجزئي في إطار استثمارات AAPI."
 
-    # المعادلات الحسابية الدقيقة
     customs_duty_amount = cif_value * (dd_rate / 100.0)
     tic_amount = cif_value * (tic_rate / 100.0)
     base_tva = cif_value + customs_duty_amount + tic_amount
     tva_amount = base_tva * (tva_rate / 100.0)
     total_taxes = customs_duty_amount + tic_amount + tva_amount
 
-    # عرض النتائج في لوحة قيادة احترافية (Dashboard)
+    # Dashboard results
     st.success("✅ تمت العملية بنجاح! إليك التقرير الجمركي المفصل:")
     
     col1, col2 = st.columns(2)
